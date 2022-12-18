@@ -1,18 +1,13 @@
-import gym
 import random
 import numpy as np
 import tensorflow as tf
 from keras.models import load_model
-from statistics import mean, median
-import time
 import datetime
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, BatchNormalization
+from keras.layers import Dense, Dropout
 from keras.models import load_model
 import numpy as np
 from keras.optimizers import Adam
-from pathlib import Path
-
 
 class Agent():
     def __init__(self, warmup_games, max_memory, dnn_netowrk):
