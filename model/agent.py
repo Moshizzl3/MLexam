@@ -9,15 +9,18 @@ from keras.models import load_model
 import numpy as np
 from keras.optimizers import Adam
 
+
 class Agent():
-    def __init__(self, warmup_games, max_memory, dnn_netowrk):
+    def __init__(self, warmup_games, max_memory, dnn_netowrk, path_data, path_model):
         self.score = 0
         self.dnn_network = dnn_netowrk
         self.warmup_games = warmup_games
         self.max_memory = max_memory
         self.model = None
+        self.path_data = path_data
+        self.path_model = path_model
 
-    def getAction(self, state, game_number):
+    def get_action(self, state, game_number):
         if game_number > self.warmup_games:
             try:
                 prediction = self.model.predict(np.array([state])).tolist()
@@ -61,34 +64,30 @@ class Agent():
 
     def trainAgent(self, new_data):
         new_list = np.array(new_data)
-        log_dir = "./data/logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(
-            log_dir=log_dir, histogram_freq=1)
 
         try:
             training_data = np.load(
-                'saved.npy', allow_pickle=True)
+                self.path_data, allow_pickle=True)
             print('Number of training_data: ' + str(len(training_data)))
             new_list = np.concatenate((training_data, new_list), axis=0)
+            np.save(self.path_data, new_list)
             forget = 0 if self.max_memory > len(
                 new_list) else len(new_list)-self.max_memory
-            np.save('saved.npy', new_list)
 
             input_data = new_list[forget:, 0].tolist()
             output_data = new_list[forget:, 1].tolist()
             self.dnn_network.fit(
-                input_data, output_data, verbose=1, epochs=10, callbacks=[tensorboard_callback])
-            self.dnn_network.save('gamemodel.h5')
-            self.model = load_model('gamemodel.h5')
+                input_data, output_data, verbose=1, epochs=10)
+            self.dnn_network.save(self.path_model)
+            self.model = load_model(self.path_model)
         except:
-            print(new_list)
             input_data = new_list[:, 0].tolist()
             output_data = new_list[:, 1].tolist()
-            np.save('saved.npy', new_list)
+            np.save(self.path_data, new_list)
             self.dnn_network.fit(
-                input_data, output_data, verbose=1, epochs=10, callbacks=[tensorboard_callback])
-            self.dnn_network.save('gamemodel.h5')
-            self.model = load_model('gamemodel.h5')
+                input_data, output_data, verbose=1, epochs=10)
+            self.dnn_network.save(self.path_model)
+            self.model = load_model(self.path_model)
 
 
 class DnnNetwork():
